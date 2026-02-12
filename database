@@ -1,0 +1,159 @@
+create database go; 
+use go; 
+
+
+create table role(
+	id_role int primary key auto_increment,
+    role varchar (25)
+);
+
+
+create table users (
+	id_users int primary key auto_increment,
+    id_role int,
+    login varchar(25),
+    password varchar(25),
+    foreign key (id_role) references role(id_role)
+);
+
+CREATE TABLE categories (
+    id_category INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(50) NOT NULL,
+    description TEXT
+);
+
+-- Таблица стульев
+CREATE TABLE chairs (
+    id_chair INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100) NOT NULL,
+    price DECIMAL(10, 2) NOT NULL,
+    description TEXT,
+    category_id INT,
+    material VARCHAR(50),
+    color VARCHAR(30),
+    width INT, -- ширина в см
+    height INT, -- высота в см
+    depth INT, -- глубина в см
+    weight DECIMAL(5, 2), -- вес в кг
+    stock_quantity INT DEFAULT 0, -- количество на складе
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (category_id) REFERENCES categories(id_category)
+);
+
+-- Таблица изображений стульев
+CREATE TABLE chair_images (
+    id_image INT PRIMARY KEY AUTO_INCREMENT,
+    chair_id INT NOT NULL,
+    image_path VARCHAR(255) NOT NULL, -- локальный путь к файлу
+    is_main BOOLEAN DEFAULT FALSE, -- главное изображение
+    sort_order INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (chair_id) REFERENCES chairs(id_chair) ON DELETE CASCADE
+);
+
+-- Таблица характеристик (для расширяемых параметров)
+CREATE TABLE chair_specifications (
+    id_spec INT PRIMARY KEY AUTO_INCREMENT,
+    chair_id INT NOT NULL,
+    spec_name VARCHAR(50) NOT NULL,
+    spec_value VARCHAR(100) NOT NULL,
+    FOREIGN KEY (chair_id) REFERENCES chairs(id_chair) ON DELETE CASCADE
+);
+
+-- Таблица отзывов
+CREATE TABLE reviews (
+    id_review INT PRIMARY KEY AUTO_INCREMENT,
+    chair_id INT NOT NULL,
+    user_id INT NOT NULL,
+    rating INT CHECK (rating >= 1 AND rating <= 5),
+    comment TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (chair_id) REFERENCES chairs(id_chair) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id_users) ON DELETE CASCADE
+);
+
+
+-- Заполнение таблицы role
+INSERT INTO role (role) VALUES 
+('admin'),
+('manager'),
+('user');
+
+-- Заполнение таблицы users
+INSERT INTO users (id_role, login, password) VALUES 
+(1, 'admin', 'admin'),    -- id_role = 1 (admin)
+(2, 'manager', 'manager'), -- id_role = 2 (manager)
+(3, 'user', 'user');      -- id_role = 3 (user)
+
+-- 1. Категории стульев
+INSERT INTO categories (name, description) VALUES 
+('Офисные кресла', 'Комфортные кресла для работы в офисе и дома'),
+('Кухонные стулья', 'Стулья для кухни и столовой'),
+('Барные стулья', 'Высокие стулья для барных стоек'),
+('Кресла для отдыха', 'Удобные кресла для релаксации'),
+('Детские стулья', 'Стулья для детей разного возраста'),
+('Дизайнерские стулья', 'Эксклюзивные модели для интерьера');
+
+-- 2. Стулья (с реальными путями к изображениям)
+INSERT INTO chairs (name, price, description, category_id, material, color, width, height, depth, weight, stock_quantity) VALUES
+('Кресло офисное CH-501', 8990.00, 'Эргономичное офисное кресло с сетчатой спинкой и подголовником. Регулировка высоты и наклона.', 1, 'Сетка, пластик', 'Черный', 65, 125, 70, 15.5, 25),
+('Стул кухонный Лофт', 3990.00, 'Стильный кухонный стул в индустриальном стиле. Металлический каркас, сиденье из массива сосны.', 2, 'Металл, дерево', 'Коричневый', 45, 85, 50, 7.2, 50),
+('Барный стул B-200', 5490.00, 'Высокий барный стул с регулировкой высоты. Подножка, мягкое сиденье.', 3, 'Металл, экокожа', 'Бежевый', 45, 110, 48, 8.5, 30),
+('Кресло Релакс', 12990.00, 'Мягкое кресло для отдыха с подставкой для ног. Механизм качания.', 4, 'Ткань, поролон', 'Синий', 80, 105, 90, 18.0, 15),
+('Стул детский DS-300', 2990.00, 'Растущий стул для детей от 3 до 12 лет. Регулировка высоты сиденья.', 5, 'Пластик, металл', 'Красный', 40, 80, 45, 4.5, 40),
+('Кресло дизайнерское EGG', 24990.00, 'Дизайнерское кресло в стиле 50-х. Полностью обтянуто премиум-кожей.', 6, 'Кожа, металл', 'Кремовый', 85, 130, 80, 22.0, 5),
+('Стул складной Camp', 1890.00, 'Складной стул для дачи и пикника. Легкий, компактный.', 2, 'Ткань, сталь', 'Зеленый', 50, 80, 60, 2.8, 100),
+('Кресло игровое GT-700', 15990.00, 'Игровое кресло с подушками, подголовником и поддержкой поясницы.', 1, 'Экокожа, металл', 'Черно-красный', 70, 135, 75, 21.0, 12),
+('Стул на одной ноге', 34500.00, 'Футуристический дизайн. Опора из полированного алюминия.', 6, 'Алюминий, пластик', 'Серебряный', 55, 90, 55, 9.0, 3),
+('Стул деревянный Классик', 4500.00, 'Классический деревянный стул с резной спинкой. Массив дуба.', 2, 'Дуб', 'Орех', 48, 92, 52, 6.5, 18);
+
+-- 3. Пути к изображениям (локальные файлы)
+-- ВНИМАНИЕ: создайте папку images/chairs/ в директории проекта
+-- и поместите туда соответствующие изображения
+INSERT INTO chair_images (chair_id, image_path, is_main, sort_order) VALUES
+(1, 'images/chairs/office_501_1.jpg', TRUE, 1),
+(1, 'images/chairs/office_501_2.jpg', FALSE, 2),
+(1, 'images/chairs/office_501_3.jpg', FALSE, 3),
+(2, 'images/chairs/loft_1.jpg', TRUE, 1),
+(2, 'images/chairs/loft_2.jpg', FALSE, 2),
+(3, 'images/chairs/bar_200_1.jpg', TRUE, 1),
+(4, 'images/chairs/relax_1.jpg', TRUE, 1),
+(4, 'images/chairs/relax_2.jpg', FALSE, 2),
+(5, 'images/chairs/kids_300_1.jpg', TRUE, 1),
+(6, 'images/chairs/egg_1.jpg', TRUE, 1),
+(6, 'images/chairs/egg_2.jpg', FALSE, 2),
+(7, 'images/chairs/camp_1.jpg', TRUE, 1),
+(8, 'images/chairs/gamer_700_1.jpg', TRUE, 1),
+(8, 'images/chairs/gamer_700_2.jpg', FALSE, 2),
+(9, 'images/chairs/oneleg_1.jpg', TRUE, 1),
+(10, 'images/chairs/classic_1.jpg', TRUE, 1),
+(10, 'images/chairs/classic_2.jpg', FALSE, 2);
+
+-- 4. Дополнительные характеристики
+INSERT INTO chair_specifications (chair_id, spec_name, spec_value) VALUES
+(1, 'Макс. нагрузка', '120 кг'),
+(1, 'Гарантия', '18 мес'),
+(2, 'Обработка', 'Лак'),
+(2, 'Страна', 'Россия'),
+(3, 'Подставка', 'Да'),
+(4, 'Механизм', 'Качание'),
+(5, 'Возраст', '3-12 лет'),
+(6, 'Бренд', 'Furninova'),
+(8, 'Подсветка', 'RGB'),
+(10, 'Обивка', 'Велюр');
+
+-- 5. Отзывы пользователей
+INSERT INTO reviews (chair_id, user_id, rating, comment) VALUES
+(1, 3, 5, 'Отличное кресло, очень удобное. Сижу уже неделю — спина не болит!'),
+(2, 3, 4, 'Хороший стул, но сборка заняла час. В целом доволен.'),
+(4, 2, 5, 'Кресло супер! Засыпаю в нем каждый вечер.'),
+(6, 1, 5, 'Дорого, но стоит каждой копейки. Шедевр!'),
+(8, 2, 4, 'Классное кресло для игр, только летом жарковато в экокоже.'),
+(10, 3, 5, 'Прекрасный классический стул. Очень прочный и красивый.');
+
+-- 6. Добавляем тестового пользователя с правами на добавление товаров
+INSERT INTO users (id_role, login, password) VALUES 
+(2, 'manager2', 'manager123'),
+(2, 'moderator', 'mod123');
+
